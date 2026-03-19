@@ -4,3 +4,6 @@ PyMuPDF
 python-dotenv
 fitz
 requests
+huggingface_hub
+python-dotenv
+requests
