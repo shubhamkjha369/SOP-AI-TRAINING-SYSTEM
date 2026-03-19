@@ -1,4 +1,9 @@
 import os
+try:
+    import streamlit as st
+except ImportError:
+    st = None
+
 from huggingface_hub import InferenceClient
 from dotenv import load_dotenv
 from formatter import safe_json_loads
@@ -6,6 +11,11 @@ from formatter import safe_json_loads
 load_dotenv()
 
 HF_API_TOKEN = os.getenv("HF_API_TOKEN")
+try:
+    if not HF_API_TOKEN and st and hasattr(st, "secrets") and "HF_API_TOKEN" in st.secrets:
+        HF_API_TOKEN = st.secrets["HF_API_TOKEN"]
+except Exception:
+    pass
 
 # ✅ Use the official InferenceClient which correctly routes API requests
 client = InferenceClient(api_key=HF_API_TOKEN) if HF_API_TOKEN else None
@@ -15,7 +25,13 @@ MODEL = "Qwen/Qwen2.5-7B-Instruct"
 def generate_quiz(sop_text):
     if not client:
         print("Quiz Generation error: HF_API_TOKEN is missing or invalid.")
-        return []
+        return [
+            {
+                "question": "API ERROR: HF_API_TOKEN missing. Please configure your Hugging Face API token in Streamlit secrets.",
+                "options": ["A", "B", "C", "D"],
+                "answer": "A"
+            }
+        ]
 
     prompt = f"""
 You are a corporate trainer.

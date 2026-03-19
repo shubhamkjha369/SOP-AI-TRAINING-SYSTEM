@@ -1,11 +1,21 @@
 import os
 import random
+try:
+    import streamlit as st
+except ImportError:
+    st = None
+
 from huggingface_hub import InferenceClient
 from dotenv import load_dotenv
 
 load_dotenv()
 
 HF_API_TOKEN = os.getenv("HF_API_TOKEN")
+try:
+    if not HF_API_TOKEN and st and hasattr(st, "secrets") and "HF_API_TOKEN" in st.secrets:
+        HF_API_TOKEN = st.secrets["HF_API_TOKEN"]
+except Exception:
+    pass
 
 # ✅ Use the official InferenceClient which correctly routes API requests
 client = InferenceClient(api_key=HF_API_TOKEN) if HF_API_TOKEN else None
@@ -15,8 +25,8 @@ MODEL = "Qwen/Qwen2.5-7B-Instruct"
 
 def call_llm(prompt, retries=3):
     if not client:
-        print("Error: HF_API_TOKEN missing in .env")
-        return ""
+        print("Error: HF_API_TOKEN missing in .env and secrets")
+        return "API ERROR: HF_API_TOKEN missing. Please configure your Hugging Face API token in .env or Streamlit secrets."
 
     # 🔥 Add randomness to force different outputs (CRITICAL for quiz regen)
     random_hint = str(random.randint(0, 100000))
